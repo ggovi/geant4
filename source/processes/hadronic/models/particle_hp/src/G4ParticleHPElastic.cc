@@ -34,33 +34,19 @@
 //
 #include "G4ParticleHPElastic.hh"
 #include "G4SystemOfUnits.hh"
-#include "G4ParticleHPElasticFS.hh"
 #include "G4ParticleHPManager.hh"
-#include "G4Threading.hh"
 #include "G4ParticleHPThermalBoost.hh"
 
 
 G4ParticleHPElastic::G4ParticleHPElastic() 
-  : G4HadronicInteraction("NeutronHPElastic"), theElastic(nullptr), numEle(0)
-{
+  : G4ParticleHPNeutronInteraction<G4ParticleHPElasticFS>("NeutronHPElastic","/Elastic"){
    overrideSuspension = false;
    SetMinEnergy(0.*eV);
    SetMaxEnergy(20.*MeV);
 }
 
   
-G4ParticleHPElastic::~G4ParticleHPElastic()
-{
-   //the vectror is shared among threads, only master deletes
-   if ( ! G4Threading::IsWorkerThread() ) {
-      if ( theElastic != nullptr ) {
-         for ( std::vector<G4ParticleHPChannel*>::iterator
-            it = theElastic->begin() ; it != theElastic->end() ; it++ ) {
-            delete *it;
-         }
-         theElastic->clear();
-      }
-   }
+G4ParticleHPElastic::~G4ParticleHPElastic(){
 }
 
 
@@ -79,7 +65,7 @@ G4HadFinalState * G4ParticleHPElastic::ApplyYourself(const G4HadProjectile& aTra
    const G4Material * theMaterial = aTrack.GetMaterial();
    G4int n = theMaterial->GetNumberOfElements();
    G4int index = theMaterial->GetElement(0)->GetIndex();
- 
+   auto& theInnerElastic = selectDataSet(theMaterial->GetTemperature()); 
    if ( ! isFromTSL ) {
       if ( n != 1 ) {
          G4int i;
@@ -91,9 +77,9 @@ G4HadFinalState * G4ParticleHPElastic::ApplyYourself(const G4HadProjectile& aTra
          for ( i = 0; i < n; i++ ) {
             index = theMaterial->GetElement(i)->GetIndex();
             rWeight = NumAtomsPerVolume[i];
-            xSec[i] = ((*theElastic)[index])->GetXsec(aThermalE.GetThermalEnergy(aTrack,
-                                                                                 theMaterial->GetElement(i),
-                                                                                 theMaterial->GetTemperature()));
+            xSec[i] = ((theInnerElastic)[index])->GetXsec(aThermalE.GetThermalEnergy(aTrack,
+										     theMaterial->GetElement(i),
+										     theMaterial->GetTemperature()));
             xSec[i] *= rWeight;
             sum+=xSec[i];
          }
@@ -117,7 +103,7 @@ G4HadFinalState * G4ParticleHPElastic::ApplyYourself(const G4HadProjectile& aTra
       }
    }
  	
-   G4HadFinalState* finalState = ((*theElastic)[index])->ApplyYourself(aTrack);
+   G4HadFinalState* finalState = ((theInnerElastic)[index])->ApplyYourself(aTrack);
    if (overrideSuspension) finalState->SetStatusChange(isAlive);
  
    // Overwrite target parameters
@@ -153,45 +139,6 @@ void G4ParticleHPElastic::SetVerboseLevel( G4int newValue )
 {
    G4ParticleHPManager::GetInstance()->SetVerboseLevel(newValue);
 }
-
-
-void G4ParticleHPElastic::BuildPhysicsTable(const G4ParticleDefinition&)
-{
-
-   G4ParticleHPManager* hpmanager = G4ParticleHPManager::GetInstance();
-
-   theElastic = hpmanager->GetElasticFinalStates();
-
-   if ( G4Threading::IsMasterThread() ) {
-
-      if ( theElastic == nullptr ) theElastic = new std::vector<G4ParticleHPChannel*>;
-
-      if ( numEle == (G4int)G4Element::GetNumberOfElements() ) return;
-
-      if ( theElastic->size() == G4Element::GetNumberOfElements() ) {
-         numEle = G4Element::GetNumberOfElements();
-         return;
-      }
-
-      G4ParticleHPElasticFS * theFS = new G4ParticleHPElasticFS;
-      if(!std::getenv("G4NEUTRONHPDATA")) 
-         throw G4HadronicException(__FILE__, __LINE__, "Please setenv G4NEUTRONHPDATA to point to the neutron cross-section files.");
-      dirName = std::getenv("G4NEUTRONHPDATA");
-      G4String tString = "/Elastic";
-      dirName = dirName + tString;
-      for ( G4int i = numEle ; i < (G4int)G4Element::GetNumberOfElements() ; i++ ) {
-         theElastic->push_back( new G4ParticleHPChannel );
-         ((*theElastic)[i])->Init((*(G4Element::GetElementTable()))[i], dirName);
-         //while(!((*theElastic)[i])->Register(theFS)) ;
-         ((*theElastic)[i])->Register(theFS) ;
-      }
-      delete theFS;
-      hpmanager->RegisterElasticFinalStates( theElastic );
-
-   }
-   numEle = G4Element::GetNumberOfElements();
-}
-
 
 void G4ParticleHPElastic::ModelDescription(std::ostream& outFile) const
 {

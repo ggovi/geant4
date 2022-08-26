@@ -101,18 +101,18 @@ class G4ParticleHPManager
       void RegisterCaptureCrossSections( G4PhysicsTable* val ){ theCaptureCrossSections = val; };
       G4PhysicsTable* GetCaptureCrossSections(){ return theCaptureCrossSections; };
       void RegisterInelasticCrossSections( const G4ParticleDefinition* , G4PhysicsTable* );
-      G4PhysicsTable* GetInelasticCrossSections(const G4ParticleDefinition* );
+      G4PhysicsTable* GetInelasticCrossSections(const G4ParticleDefinition*);
       void RegisterFissionCrossSections( G4PhysicsTable* val ){ theFissionCrossSections = val; };
       G4PhysicsTable* GetFissionCrossSections(){ return theFissionCrossSections; };
 
-      std::vector<G4ParticleHPChannel*>* GetElasticFinalStates() { return theElasticFSs; };
-      void RegisterElasticFinalStates( std::vector<G4ParticleHPChannel*>* val ) { theElasticFSs = val; };
+      std::map<int,std::vector<G4ParticleHPChannel*> >* GetElasticFinalStates() { return theElasticFSs; };
+      void RegisterElasticFinalStates( std::map<int,std::vector<G4ParticleHPChannel*> >* val ) { theElasticFSs = val; };
       std::vector<G4ParticleHPChannelList*>* GetInelasticFinalStates( const G4ParticleDefinition* );
       void RegisterInelasticFinalStates( const G4ParticleDefinition* , std::vector<G4ParticleHPChannelList*>* );
-      std::vector<G4ParticleHPChannel*>* GetCaptureFinalStates() { return theCaptureFSs; };
-      void RegisterCaptureFinalStates( std::vector<G4ParticleHPChannel*>* val ) { theCaptureFSs = val; };
-      std::vector<G4ParticleHPChannel*>* GetFissionFinalStates() { return theFissionFSs; };
-      void RegisterFissionFinalStates( std::vector<G4ParticleHPChannel*>* val ) { theFissionFSs = val; };
+      std::map<int,std::vector<G4ParticleHPChannel*> >* GetCaptureFinalStates() { return theCaptureFSs; };
+      void RegisterCaptureFinalStates( std::map<int,std::vector<G4ParticleHPChannel*> >* val ) { theCaptureFSs = val; };
+      std::map<int,std::vector<G4ParticleHPChannel*> >* GetFissionFinalStates() { return theFissionFSs; };
+      void RegisterFissionFinalStates( std::map<int,std::vector<G4ParticleHPChannel*> >* val ) { theFissionFSs = val; };
 
       std::map<G4int,std::map<G4double,G4ParticleHPVector*>*>* GetThermalScatteringCoherentCrossSections() { return theTSCoherentCrossSections; };
       void RegisterThermalScatteringCoherentCrossSections( std::map<G4int,std::map<G4double,G4ParticleHPVector*>*>* val ) { theTSCoherentCrossSections = val; };
@@ -150,10 +150,10 @@ class G4ParticleHPManager
       std::map< const G4ParticleDefinition* , G4PhysicsTable* > theInelasticCrossSections;
       G4PhysicsTable* theFissionCrossSections;
 
-      std::vector<G4ParticleHPChannel*>* theElasticFSs;
+      std::map<int,std::vector<G4ParticleHPChannel*> >* theElasticFSs;
       std::map< const G4ParticleDefinition* , std::vector<G4ParticleHPChannelList*>* > theInelasticFSs;
-      std::vector<G4ParticleHPChannel*>* theCaptureFSs;
-      std::vector<G4ParticleHPChannel*>* theFissionFSs;
+      std::map<int,std::vector<G4ParticleHPChannel*> >* theCaptureFSs;
+      std::map<int,std::vector<G4ParticleHPChannel*> >* theFissionFSs;
 
       std::map< G4int , std::map< G4double , G4ParticleHPVector* >* >* theTSCoherentCrossSections;
       std::map< G4int , std::map< G4double , G4ParticleHPVector* >* >* theTSIncoherentCrossSections;

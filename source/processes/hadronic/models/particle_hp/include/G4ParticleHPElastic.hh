@@ -43,9 +43,10 @@
 
 #include "globals.hh"
 #include "G4ParticleHPChannel.hh"
-#include "G4HadronicInteraction.hh"
+#include "G4ParticleHPNeutronInteraction.hh"
+#include "G4ParticleHPElasticFS.hh"
 
-class G4ParticleHPElastic : public G4HadronicInteraction
+class G4ParticleHPElastic : public G4ParticleHPNeutronInteraction<G4ParticleHPElasticFS>
 {
   public: 
   
@@ -58,22 +59,16 @@ class G4ParticleHPElastic : public G4HadronicInteraction
 
   virtual const std::pair<G4double, G4double> GetFatalEnergyCheckLevels() const;
 
-  //G4int GetNiso() {return theElastic[0].GetNiso();}
-  G4int GetNiso() {return ((*theElastic)[0])->GetNiso();};
+  G4int GetNiso() {return ((getDefaultDataSet())[0])->GetNiso();};
 
   void DoNotSuspend() {overrideSuspension = true;}
 
    public:
       G4int GetVerboseLevel() const;
       void SetVerboseLevel( G4int );
-      void BuildPhysicsTable(const G4ParticleDefinition&);
       virtual void ModelDescription(std::ostream& outFile) const;
 
   private:
-      std::vector<G4ParticleHPChannel*>* theElastic;
-  
-  G4String dirName;
-  G4int numEle;
   G4bool overrideSuspension;
 
 };

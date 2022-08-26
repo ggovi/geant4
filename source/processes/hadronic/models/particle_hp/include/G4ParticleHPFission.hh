@@ -47,9 +47,10 @@
 
 #include "globals.hh"
 #include "G4ParticleHPChannel.hh"
-#include "G4HadronicInteraction.hh"
+#include "G4ParticleHPNeutronInteraction.hh"
+#include "G4ParticleHPFissionFS.hh"
 
-class G4ParticleHPFission : public G4HadronicInteraction
+class G4ParticleHPFission : public G4ParticleHPNeutronInteraction<G4ParticleHPFissionFS>
 {
   public: 
   
@@ -64,15 +65,7 @@ class G4ParticleHPFission : public G4HadronicInteraction
    public:
       G4int GetVerboseLevel() const;
       void SetVerboseLevel( G4int );
-      void BuildPhysicsTable(const G4ParticleDefinition&);
       virtual void ModelDescription(std::ostream& outFile) const;
-
-  private:
-  
-  //G4ParticleHPChannel * theFission;
-      std::vector<G4ParticleHPChannel*>* theFission;
-  G4String dirName;
-  G4int numEle;
 
 };
 
