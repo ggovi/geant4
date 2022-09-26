@@ -107,12 +107,13 @@ class G4ParticleHPManager
 
       std::map<int,std::vector<G4ParticleHPChannel*> >* GetElasticFinalStates() { return theElasticFSs; };
       void RegisterElasticFinalStates( std::map<int,std::vector<G4ParticleHPChannel*> >* val ) { theElasticFSs = val; };
-      std::vector<G4ParticleHPChannelList*>* GetInelasticFinalStates( const G4ParticleDefinition* );
-      void RegisterInelasticFinalStates( const G4ParticleDefinition* , std::vector<G4ParticleHPChannelList*>* );
       std::map<int,std::vector<G4ParticleHPChannel*> >* GetCaptureFinalStates() { return theCaptureFSs; };
       void RegisterCaptureFinalStates( std::map<int,std::vector<G4ParticleHPChannel*> >* val ) { theCaptureFSs = val; };
       std::map<int,std::vector<G4ParticleHPChannel*> >* GetFissionFinalStates() { return theFissionFSs; };
       void RegisterFissionFinalStates( std::map<int,std::vector<G4ParticleHPChannel*> >* val ) { theFissionFSs = val; };
+      std::vector<G4ParticleHPChannelList*>* GetInelasticFinalStates( const G4ParticleDefinition* );
+      void RegisterInelasticFinalStates( const G4ParticleDefinition* , std::vector<G4ParticleHPChannelList*>* );
+  
 
       std::map<G4int,std::map<G4double,G4ParticleHPVector*>*>* GetThermalScatteringCoherentCrossSections() { return theTSCoherentCrossSections; };
       void RegisterThermalScatteringCoherentCrossSections( std::map<G4int,std::map<G4double,G4ParticleHPVector*>*>* val ) { theTSCoherentCrossSections = val; };
@@ -151,9 +152,9 @@ class G4ParticleHPManager
       G4PhysicsTable* theFissionCrossSections;
 
       std::map<int,std::vector<G4ParticleHPChannel*> >* theElasticFSs;
-      std::map< const G4ParticleDefinition* , std::vector<G4ParticleHPChannelList*>* > theInelasticFSs;
       std::map<int,std::vector<G4ParticleHPChannel*> >* theCaptureFSs;
       std::map<int,std::vector<G4ParticleHPChannel*> >* theFissionFSs;
+      std::map< const G4ParticleDefinition* , std::vector<G4ParticleHPChannelList*>* > theInelasticFSs;
 
       std::map< G4int , std::map< G4double , G4ParticleHPVector* >* >* theTSCoherentCrossSections;
       std::map< G4int , std::map< G4double , G4ParticleHPVector* >* >* theTSIncoherentCrossSections;

@@ -35,9 +35,27 @@
 #include "G4ParticleHPFission.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4ParticleHPManager.hh"
+#include "G4Threading.hh"
 
-  G4ParticleHPFission::G4ParticleHPFission()
-    :G4ParticleHPNeutronInteraction<G4ParticleHPFissionFS>("NeutronHPFission","/Fission"){
+template <> const int G4ParticleHPNeutronInteraction<G4ParticleHPFissionFS>::Z_THRESHOLD=87;
+
+class G4ParticleHPFissionMgrProxy: public G4ParticleHPManagerProxyBase {
+  void RegisterInteractionFinalStates( std::map<int,std::vector<G4ParticleHPChannel*> >* val ) override {
+    G4ParticleHPManager* hpmanager = G4ParticleHPManager::GetInstance();
+    hpmanager->RegisterFissionFinalStates( val );
+  }  
+
+  std::map<int,std::vector<G4ParticleHPChannel*> >* GetInteractionFinalStates() override {
+    G4ParticleHPManager* hpmanager = G4ParticleHPManager::GetInstance();
+    return hpmanager->GetFissionFinalStates();
+  }
+};
+
+G4ParticleHPFission::G4ParticleHPFission():G4ParticleHPNeutronInteraction("NeutronHPFission","/Fission"),
+					   theManagerProxy()
+  {
+    theManagerProxy.reset( new G4ParticleHPFissionMgrProxy );
+    setupManagerProxy( theManagerProxy.get() );
     SetMinEnergy( 0.0 );
     SetMaxEnergy( 20.*MeV );
 /*
@@ -71,7 +89,21 @@
 */
   }
   
-  G4ParticleHPFission::~G4ParticleHPFission(){
+  G4ParticleHPFission::~G4ParticleHPFission()
+  {
+    //Vector is shared, only master deletes it
+    //delete [] theFission;
+    /**
+    if ( ! G4Threading::IsMasterThread() ) {
+        if ( theFission != NULL ) {
+            for ( std::vector<G4ParticleHPChannel*>::iterator
+                it = theFission->begin() ; it != theFission->end() ; it++ ) {
+                delete *it;
+            }
+            theFission->clear();
+        }
+    }
+    **/
   }
   
   #include "G4ParticleHPThermalBoost.hh"
@@ -82,7 +114,7 @@
     const G4Material * theMaterial = aTrack.GetMaterial();
     G4int n = theMaterial->GetNumberOfElements();
     G4int index = theMaterial->GetElement(0)->GetIndex();
-    auto& theInnerFission = selectDataSet(theMaterial->GetTemperature()); 
+    auto& theFission = selectDataSet(theMaterial->GetTemperature()); 
     if(n!=1)
     {
       G4double* xSec = new G4double[n];
@@ -95,9 +127,9 @@
       {
         index = theMaterial->GetElement(i)->GetIndex();
         rWeight = NumAtomsPerVolume[i];
-        xSec[i] = ((theInnerFission)[index])->GetXsec(aThermalE.GetThermalEnergy(aTrack,
-										 theMaterial->GetElement(i),
-										 theMaterial->GetTemperature()));
+        xSec[i] = ((theFission)[index])->GetXsec(aThermalE.GetThermalEnergy(aTrack,
+  		                                                      theMaterial->GetElement(i),
+  								      theMaterial->GetTemperature()));
         xSec[i] *= rWeight;
         sum+=xSec[i];
       }
@@ -113,7 +145,7 @@
       delete [] xSec;
     }
     //return theFission[index].ApplyYourself(aTrack);                 //-2:Marker for Fission
-    G4HadFinalState* result = ((theInnerFission)[index])->ApplyYourself(aTrack,-2);
+    G4HadFinalState* result = ((theFission)[index])->ApplyYourself(aTrack,-2);
 
     //Overwrite target parameters
     aNucleus.SetParameters(G4ParticleHPManager::GetInstance()->GetReactionWhiteBoard()->GetTargA(),G4ParticleHPManager::GetInstance()->GetReactionWhiteBoard()->GetTargZ());
@@ -164,6 +196,7 @@ void G4ParticleHPFission::SetVerboseLevel( G4int newValue )
 {
    G4ParticleHPManager::GetInstance()->SetVerboseLevel(newValue);
 }
+
 
 void G4ParticleHPFission::ModelDescription(std::ostream& outFile) const
 {

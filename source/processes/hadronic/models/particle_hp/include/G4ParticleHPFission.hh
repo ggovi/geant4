@@ -50,6 +50,8 @@
 #include "G4ParticleHPNeutronInteraction.hh"
 #include "G4ParticleHPFissionFS.hh"
 
+class G4ParticleHPFissionMgrProxy;
+
 class G4ParticleHPFission : public G4ParticleHPNeutronInteraction<G4ParticleHPFissionFS>
 {
   public: 
@@ -67,6 +69,10 @@ class G4ParticleHPFission : public G4ParticleHPNeutronInteraction<G4ParticleHPFi
       void SetVerboseLevel( G4int );
       virtual void ModelDescription(std::ostream& outFile) const;
 
+  private:
+
+  std::unique_ptr<G4ParticleHPFissionMgrProxy> theManagerProxy;
+  
 };
 
 #endif

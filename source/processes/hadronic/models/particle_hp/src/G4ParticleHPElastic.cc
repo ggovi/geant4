@@ -35,18 +35,46 @@
 #include "G4ParticleHPElastic.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4ParticleHPManager.hh"
+#include "G4Threading.hh"
 #include "G4ParticleHPThermalBoost.hh"
 
+class G4ParticleHPElasticMgrProxy: public G4ParticleHPManagerProxyBase {
+  void RegisterInteractionFinalStates( std::map<int,std::vector<G4ParticleHPChannel*> >* val ) override {
+    G4ParticleHPManager* hpmanager = G4ParticleHPManager::GetInstance();
+    hpmanager->RegisterElasticFinalStates( val );
+  }  
 
-G4ParticleHPElastic::G4ParticleHPElastic() 
-  : G4ParticleHPNeutronInteraction<G4ParticleHPElasticFS>("NeutronHPElastic","/Elastic"){
-   overrideSuspension = false;
-   SetMinEnergy(0.*eV);
-   SetMaxEnergy(20.*MeV);
+  std::map<int,std::vector<G4ParticleHPChannel*> >* GetInteractionFinalStates() override {
+    G4ParticleHPManager* hpmanager = G4ParticleHPManager::GetInstance();
+    return hpmanager->GetElasticFinalStates();
+  }
+};
+
+G4ParticleHPElastic::G4ParticleHPElastic():G4ParticleHPNeutronInteraction("NeutronHPElastic","/Elastic"),
+					   theManagerProxy()
+{
+  theManagerProxy.reset( new G4ParticleHPElasticMgrProxy );
+  setupManagerProxy( theManagerProxy.get() );
+  overrideSuspension = false;
+  SetMinEnergy(0.*eV);
+  SetMaxEnergy(20.*MeV);
 }
 
   
-G4ParticleHPElastic::~G4ParticleHPElastic(){
+G4ParticleHPElastic::~G4ParticleHPElastic()
+{
+   //the vectror is shared among threads, only master deletes
+  /**
+   if ( ! G4Threading::IsWorkerThread() ) {
+      if ( theElastic != nullptr ) {
+         for ( std::vector<G4ParticleHPChannel*>::iterator
+            it = theElastic->begin() ; it != theElastic->end() ; it++ ) {
+            delete *it;
+         }
+         theElastic->clear();
+      }
+   }
+  **/
 }
 
 
@@ -65,7 +93,8 @@ G4HadFinalState * G4ParticleHPElastic::ApplyYourself(const G4HadProjectile& aTra
    const G4Material * theMaterial = aTrack.GetMaterial();
    G4int n = theMaterial->GetNumberOfElements();
    G4int index = theMaterial->GetElement(0)->GetIndex();
-   auto& theInnerElastic = selectDataSet(theMaterial->GetTemperature()); 
+   auto& theElastic = selectDataSet(theMaterial->GetTemperature()); 
+ 
    if ( ! isFromTSL ) {
       if ( n != 1 ) {
          G4int i;
@@ -77,9 +106,9 @@ G4HadFinalState * G4ParticleHPElastic::ApplyYourself(const G4HadProjectile& aTra
          for ( i = 0; i < n; i++ ) {
             index = theMaterial->GetElement(i)->GetIndex();
             rWeight = NumAtomsPerVolume[i];
-            xSec[i] = ((theInnerElastic)[index])->GetXsec(aThermalE.GetThermalEnergy(aTrack,
-										     theMaterial->GetElement(i),
-										     theMaterial->GetTemperature()));
+            xSec[i] = ((theElastic)[index])->GetXsec(aThermalE.GetThermalEnergy(aTrack,
+                                                                                 theMaterial->GetElement(i),
+                                                                                 theMaterial->GetTemperature()));
             xSec[i] *= rWeight;
             sum+=xSec[i];
          }
@@ -103,7 +132,7 @@ G4HadFinalState * G4ParticleHPElastic::ApplyYourself(const G4HadProjectile& aTra
       }
    }
  	
-   G4HadFinalState* finalState = ((theInnerElastic)[index])->ApplyYourself(aTrack);
+   G4HadFinalState* finalState = ((theElastic)[index])->ApplyYourself(aTrack);
    if (overrideSuspension) finalState->SetStatusChange(isAlive);
  
    // Overwrite target parameters
@@ -139,6 +168,7 @@ void G4ParticleHPElastic::SetVerboseLevel( G4int newValue )
 {
    G4ParticleHPManager::GetInstance()->SetVerboseLevel(newValue);
 }
+
 
 void G4ParticleHPElastic::ModelDescription(std::ostream& outFile) const
 {

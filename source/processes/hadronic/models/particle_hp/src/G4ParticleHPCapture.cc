@@ -37,10 +37,25 @@
 #include "G4ParticleHPDeExGammas.hh"
 #include "G4ParticleTable.hh"
 #include "G4IonTable.hh"
+#include "G4Threading.hh"
 
-  G4ParticleHPCapture::G4ParticleHPCapture()
-    :G4ParticleHPNeutronInteraction<G4ParticleHPCaptureFS>("NeutronHPCapture","/Capture")
+class G4ParticleHPCaptureMgrProxy: public G4ParticleHPManagerProxyBase {
+  void RegisterInteractionFinalStates( std::map<int,std::vector<G4ParticleHPChannel*> >* val ) override {
+    G4ParticleHPManager* hpmanager = G4ParticleHPManager::GetInstance();
+    hpmanager->RegisterCaptureFinalStates( val );
+  }  
+
+  std::map<int,std::vector<G4ParticleHPChannel*> >* GetInteractionFinalStates() override {
+    G4ParticleHPManager* hpmanager = G4ParticleHPManager::GetInstance();
+    return hpmanager->GetCaptureFinalStates();
+  }
+};
+
+G4ParticleHPCapture::G4ParticleHPCapture()
+  :G4ParticleHPNeutronInteraction("NeutronHPCapture","/Capture"),theManagerProxy()
   {
+    theManagerProxy.reset( new G4ParticleHPCaptureMgrProxy );
+    setupManagerProxy( theManagerProxy.get() );
     SetMinEnergy( 0.0 );
     SetMaxEnergy( 20.*MeV );
 /*
@@ -74,12 +89,27 @@
 */
   }
   
-  G4ParticleHPCapture::~G4ParticleHPCapture(){
+  G4ParticleHPCapture::~G4ParticleHPCapture()
+  {
+    //delete [] theCapture;
+    //vector is shared, only master deletes
+    /**
+    if ( ! G4Threading::IsWorkerThread() ) {
+        if ( theCapture != NULL ) {
+            for ( std::vector<G4ParticleHPChannel*>::iterator
+                ite = theCapture->begin() ; ite != theCapture->end() ; ite++ ) {
+                delete *ite;
+            }
+            theCapture->clear();
+        }
+    }
+    **/
   }
   
   #include "G4ParticleHPThermalBoost.hh"
   G4HadFinalState * G4ParticleHPCapture::ApplyYourself(const G4HadProjectile& aTrack, G4Nucleus& aNucleus )
   {
+
     //if ( numEle < (G4int)G4Element::GetNumberOfElements() ) addChannelForNewElement();
 
     G4ParticleHPManager::GetInstance()->OpenReactionWhiteBoard();
@@ -87,7 +117,7 @@
     const G4Material * theMaterial = aTrack.GetMaterial();
     G4int n = theMaterial->GetNumberOfElements();
     G4int index = theMaterial->GetElement(0)->GetIndex();
-    auto& theInnerCapture = selectDataSet(theMaterial->GetTemperature()); 
+    auto& theCapture = selectDataSet(theMaterial->GetTemperature()); 
     if(n!=1)
     {
       G4double* xSec = new G4double[n];
@@ -100,9 +130,9 @@
       {
         index = theMaterial->GetElement(i)->GetIndex();
         rWeight = NumAtomsPerVolume[i];
-        xSec[i] = ((theInnerCapture)[index])->GetXsec(aThermalE.GetThermalEnergy(aTrack,
-										 theMaterial->GetElement(i),
-										 theMaterial->GetTemperature()));
+        xSec[i] = ((theCapture)[index])->GetXsec(aThermalE.GetThermalEnergy(aTrack,
+  		                                                     theMaterial->GetElement(i),
+  								     theMaterial->GetTemperature()));
         xSec[i] *= rWeight;
         sum+=xSec[i];
       }
@@ -120,8 +150,7 @@
     }
 
     //return theCapture[index].ApplyYourself(aTrack);
-    //G4HadFinalState* result = theCapture[index].ApplyYourself(aTrack);
-    G4HadFinalState* result = ((theInnerCapture)[index])->ApplyYourself(aTrack);
+    G4HadFinalState* result = ((theCapture)[index])->ApplyYourself(aTrack);
 
     //Overwrite target parameters
     aNucleus.SetParameters(G4ParticleHPManager::GetInstance()->GetReactionWhiteBoard()->GetTargA(),G4ParticleHPManager::GetInstance()->GetReactionWhiteBoard()->GetTargZ());

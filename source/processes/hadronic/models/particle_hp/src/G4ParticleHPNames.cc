@@ -252,7 +252,7 @@ G4ParticleHPDataUsed G4ParticleHPNames::GetName(G4int A, G4int Z, G4int M, G4Str
           result.SetZ(myZ);
           result.SetM(M);
        }
-
+       
        do 
        {
          if (delta_Z > theMaxOffSet) {
@@ -335,7 +335,9 @@ G4ParticleHPDataUsed G4ParticleHPNames::GetName(G4int A, G4int Z, G4int M, G4Str
        if ( rest == "/CrossSection" )
        {
           G4String reac = base;
-          G4String dir = std::getenv("G4NEUTRONHPDATA"); 
+	  const char* dataEnv = std::getenv("G4NEUTRONHPTEMPDATA");
+	  if( !dataEnv ) dataEnv = std::getenv("G4NEUTRONHPDATA");
+          G4String dir = dataEnv; 
           reac.erase ( 0 , dir.length() );
           if ( G4ParticleHPManager::GetInstance()->GetSkipMissingIsotopes() && !( Z == result.GetZ() && result.IsThisNaturalAbundance() ) )
           {

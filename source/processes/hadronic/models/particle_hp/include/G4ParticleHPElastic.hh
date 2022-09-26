@@ -46,6 +46,8 @@
 #include "G4ParticleHPNeutronInteraction.hh"
 #include "G4ParticleHPElasticFS.hh"
 
+class G4ParticleHPElasticMgrProxy;
+
 class G4ParticleHPElastic : public G4ParticleHPNeutronInteraction<G4ParticleHPElasticFS>
 {
   public: 
@@ -59,7 +61,7 @@ class G4ParticleHPElastic : public G4ParticleHPNeutronInteraction<G4ParticleHPEl
 
   virtual const std::pair<G4double, G4double> GetFatalEnergyCheckLevels() const;
 
-  G4int GetNiso() {return ((getDefaultDataSet())[0])->GetNiso();};
+  G4int GetNiso() { return getDefaultDataSet()[0]->GetNiso(); }
 
   void DoNotSuspend() {overrideSuspension = true;}
 
@@ -69,6 +71,9 @@ class G4ParticleHPElastic : public G4ParticleHPNeutronInteraction<G4ParticleHPEl
       virtual void ModelDescription(std::ostream& outFile) const;
 
   private:
+
+  std::unique_ptr<G4ParticleHPElasticMgrProxy> theManagerProxy;
+
   G4bool overrideSuspension;
 
 };

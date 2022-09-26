@@ -47,6 +47,8 @@
 #include "G4ParticleHPNeutronInteraction.hh"
 #include "G4ParticleHPCaptureFS.hh"
 
+class G4ParticleHPCaptureMgrProxy;
+
 class G4ParticleHPCapture : public G4ParticleHPNeutronInteraction<G4ParticleHPCaptureFS>
 {
   public: 
@@ -64,6 +66,11 @@ class G4ParticleHPCapture : public G4ParticleHPNeutronInteraction<G4ParticleHPCa
       void SetVerboseLevel( G4int );
       virtual void ModelDescription(std::ostream& outFile) const;
   
+  private:
+
+  std::unique_ptr<G4ParticleHPCaptureMgrProxy> theManagerProxy;
+  
+  G4HadFinalState theResult;
 };
 
 #endif
