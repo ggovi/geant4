@@ -14,13 +14,9 @@
 #include "globals.hh"
 #include "G4ParticleHPChannel.hh"
 #include "G4HadronicInteraction.hh"
+#include "G4CrossSectionDataFiles.hh"
 
-class G4ParticleHPManagerProxyBase {
-public:
-  virtual ~G4ParticleHPManagerProxyBase(){}
-  virtual void RegisterInteractionFinalStates( std::map<int,std::vector<G4ParticleHPChannel*> >* val ) = 0;
-  virtual std::map<int,std::vector<G4ParticleHPChannel*> >* GetInteractionFinalStates() = 0;
-};
+class G4ParticleHPManagerProxyBase;
 
 class G4ParticleHPNeutronInteractionData {
   public:
@@ -41,7 +37,7 @@ class G4ParticleHPNeutronInteractionData {
   std::map<int,std::vector<G4ParticleHPChannel*> >* theInteraction = nullptr;
   G4String dirName;
   G4int numEle = 0;
-  std::vector<int> theIOVs;
+  CrossSectionDataIOVSet theIOVs;
 };
 
 template <typename FinalState> class G4ParticleHPNeutronInteraction : public G4HadronicInteraction

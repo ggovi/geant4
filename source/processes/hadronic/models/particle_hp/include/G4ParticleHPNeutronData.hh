@@ -25,54 +25,51 @@
 //
 //
 //
-// 080417 Add IsZAApplicable method (return false) by T. Koi
-// 080428 Add bool onFlightDB by T. Koi
-// 091118 Add Ignore and Enable On Flight Doppler Broadening methods by T. Koi
-//
+ // Hadronic Process: Very Low Energy Neutron X-Sections
+ // original by H.P. Wellisch, TRIUMF, 14-Feb-97
+ // Has the Cross-section data for all materials.
 // P. Arce, June-2014 Conversion neutron_hp to particle_hp
 //
-#ifndef G4ParticleHPElasticData_h
-#define G4ParticleHPElasticData_h 1
+#ifndef G4ParticleHPNeutronData_h
+#define G4ParticleHPNeutronData_h 1
+#include "globals.hh"
+#include "G4Element.hh"
+//#include "G4ParticleHPElasticData.hh"
+//#include "G4ParticleHPInelasticData.hh"
+//#include "G4ParticleHPFissionData.hh"
+//#include "G4ParticleHPCaptureData.hh"
+#include "G4ParticleHPNeutronElementData.hh"
 
-// Class Description
-// Cross-section data set for a high precision (based on evaluated data
-// libraries) description of neutron elastic scattering below 20 MeV; 
-// To be used in your physics list in case you need this physics.
-// In this case you want to register an object of this class with 
-// the corresponding process.
-// Class Description - End
+#include <vector>
 
-#include "G4ParticleHPNeutronXSDataSet.hh"
-//#include "G4DynamicParticle.hh"
-//#include "G4Element.hh"
-//#include "G4ParticleDefinition.hh"
-//#include "G4PhysicsTable.hh"
-
-class G4ParticleHPElasticDataProxy;
-
-class G4ParticleHPElasticData : public G4ParticleHPNeutronXSDataSet
+class G4ParticleHPNeutronData
 {
-   public:
-      static constexpr const char* const MODEL_NAME = "Elastic";
-      static std::vector<std::pair<std::string,G4ParticleHPNeutronData > >& dataStore();
+public:
 
-   public:
-   
-      G4ParticleHPElasticData();
-   
-      ~G4ParticleHPElasticData();
-   
+  G4ParticleHPNeutronData();
 
-      //G4bool IsApplicable(const G4DynamicParticle*, const G4Element*);
-      //G4bool IsZAApplicable( const G4DynamicParticle* , G4double /*ZZ*/, G4double /*AA*/)
-      //{ return false;}
+  void Init( G4String dataFolderPath, G4int ZThreshold);
 
-      virtual void CrossSectionDescription(std::ostream&) const;
-   
-   private:
+  ~G4ParticleHPNeutronData();
 
-      std::unique_ptr<G4ParticleHPElasticDataProxy> theMgrProxy;
-   
+  inline G4PhysicsVector * MakePhysicsVector(G4Element * thE)
+  {
+     if ( numEle <= (G4int)thE->GetIndex() ) addPhysicsVector(); 
+     return DoPhysicsVector((theData[thE->GetIndex()]).GetData());
+  }
+
+  G4PhysicsVector * DoPhysicsVector(G4ParticleHPVector * theVector);
+  
+  static std::vector<std::pair<std::string,G4ParticleHPNeutronData > >* MakeXSDataStore( G4String modelName, G4int ZThreshold=0 );
+  
+private:
+
+  std::vector< G4ParticleHPNeutronElementData > theData;
+  G4int numEle;
+  void addPhysicsVector();
+
+  G4String theDataFolderPath;
+  G4int theZThreshold;
 };
 
 #endif

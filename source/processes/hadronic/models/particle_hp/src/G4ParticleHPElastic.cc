@@ -50,7 +50,7 @@ class G4ParticleHPElasticMgrProxy: public G4ParticleHPManagerProxyBase {
   }
 };
 
-G4ParticleHPElastic::G4ParticleHPElastic():G4ParticleHPNeutronInteraction("NeutronHPElastic","/Elastic"),
+G4ParticleHPElastic::G4ParticleHPElastic():G4ParticleHPNeutronInteraction("NeutronHPElastic","Elastic"),
 					   theManagerProxy()
 {
   theManagerProxy.reset( new G4ParticleHPElasticMgrProxy );
@@ -93,7 +93,7 @@ G4HadFinalState * G4ParticleHPElastic::ApplyYourself(const G4HadProjectile& aTra
    const G4Material * theMaterial = aTrack.GetMaterial();
    G4int n = theMaterial->GetNumberOfElements();
    G4int index = theMaterial->GetElement(0)->GetIndex();
-   auto& theElastic = selectDataSet(theMaterial->GetTemperature()); 
+   auto& theElastic = selectDataSet(theMaterial->GetTemperature());
  
    if ( ! isFromTSL ) {
       if ( n != 1 ) {

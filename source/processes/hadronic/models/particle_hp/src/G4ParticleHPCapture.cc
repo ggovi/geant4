@@ -52,7 +52,7 @@ class G4ParticleHPCaptureMgrProxy: public G4ParticleHPManagerProxyBase {
 };
 
 G4ParticleHPCapture::G4ParticleHPCapture()
-  :G4ParticleHPNeutronInteraction("NeutronHPCapture","/Capture"),theManagerProxy()
+  :G4ParticleHPNeutronInteraction("NeutronHPCapture","Capture"),theManagerProxy()
   {
     theManagerProxy.reset( new G4ParticleHPCaptureMgrProxy );
     setupManagerProxy( theManagerProxy.get() );

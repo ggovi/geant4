@@ -51,7 +51,7 @@ class G4ParticleHPFissionMgrProxy: public G4ParticleHPManagerProxyBase {
   }
 };
 
-G4ParticleHPFission::G4ParticleHPFission():G4ParticleHPNeutronInteraction("NeutronHPFission","/Fission"),
+G4ParticleHPFission::G4ParticleHPFission():G4ParticleHPNeutronInteraction("NeutronHPFission","Fission"),
 					   theManagerProxy()
   {
     theManagerProxy.reset( new G4ParticleHPFissionMgrProxy );
@@ -114,7 +114,7 @@ G4ParticleHPFission::G4ParticleHPFission():G4ParticleHPNeutronInteraction("Neutr
     const G4Material * theMaterial = aTrack.GetMaterial();
     G4int n = theMaterial->GetNumberOfElements();
     G4int index = theMaterial->GetElement(0)->GetIndex();
-    auto& theFission = selectDataSet(theMaterial->GetTemperature()); 
+    auto& theFission = selectDataSet(theMaterial->GetTemperature());
     if(n!=1)
     {
       G4double* xSec = new G4double[n];

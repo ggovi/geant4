@@ -42,58 +42,36 @@
 // the corresponding process.
 // Class Description - End
 
-#include "G4VCrossSectionDataSet.hh"
-#include "G4DynamicParticle.hh"
-#include "G4Element.hh"
-#include "G4ParticleDefinition.hh"
-#include "G4PhysicsTable.hh"
+#include "G4ParticleHPNeutronXSDataSet.hh"
+//#include "G4DynamicParticle.hh"
+//#include "G4Element.hh"
+//#include "G4ParticleDefinition.hh"
+//#include "G4PhysicsTable.hh"
 
-class G4ParticleHPCaptureData : public G4VCrossSectionDataSet
+class G4ParticleHPCaptureDataProxy;
+
+class G4ParticleHPCaptureData : public G4ParticleHPNeutronXSDataSet
 {
+   public:
+      static constexpr const char* const MODEL_NAME = "Capture";
+      static std::vector<std::pair<std::string,G4ParticleHPNeutronData > >& dataStore();
+  
    public:
    
       G4ParticleHPCaptureData();
    
       ~G4ParticleHPCaptureData();
-   
-      G4bool IsIsoApplicable( const G4DynamicParticle* , 
-                              G4int /*Z*/ , G4int /*A*/ ,
-                              const G4Element* /*elm*/ ,
-                              const G4Material* /*mat*/ );
-
-      G4double GetIsoCrossSection( const G4DynamicParticle*  , 
-                                   G4int /*Z*/ , G4int /*A*/ ,
-                                   const G4Isotope* /*iso*/  ,
-                                   const G4Element* /*elm*/  ,
-                                   const G4Material* /*mat*/ );
 
       //G4bool IsApplicable(const G4DynamicParticle*, const G4Element*);
-
-   public:
       //G4bool IsZAApplicable( const G4DynamicParticle* , G4double /*ZZ*/, G4double /*AA*/)
       //{ return false;}
 
-      G4double GetCrossSection(const G4DynamicParticle*, const G4Element*, G4double aT);
-
-      void BuildPhysicsTable(const G4ParticleDefinition&);
-
-      void DumpPhysicsTable(const G4ParticleDefinition&);
-
-   public:
-      G4int GetVerboseLevel() const;
-      void SetVerboseLevel( G4int );
       virtual void CrossSectionDescription(std::ostream&) const;
    
    private:
+
+      std::unique_ptr<G4ParticleHPCaptureDataProxy> theMgrProxy;
    
-      G4PhysicsTable * theCrossSections;
-
-      G4bool instanceOfWorker;
-
-      G4double ke_cache;
-      G4double xs_cache;
-      const G4Element* element_cache;
-      const G4Material* material_cache;
 };
 
 #endif

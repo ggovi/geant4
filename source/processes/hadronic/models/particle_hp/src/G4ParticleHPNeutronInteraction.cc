@@ -25,9 +25,8 @@ G4ParticleHPNeutronInteractionData::~G4ParticleHPNeutronInteractionData(){
       }
       theInteraction->clear();
     }
-    // !!!! This is crashing when enabled (double delete)... to be investigated 
+    // !!!! This causes a crash when enabled (double delete?)... to be investigated 
     //delete theInteraction;
-    //theInteraction = nullptr;
   }
 }
 
@@ -39,15 +38,9 @@ std::vector<G4ParticleHPChannel*>& G4ParticleHPNeutronInteractionData::selectDat
   // the case of non-initalized class
   if(theInteraction == nullptr) throw G4HadronicException(__FILE__, __LINE__, "The Data Set has not been loaded.");
   // identify the data set (the default case will deliver the key=0 )
-  int target = std::floor(temperature);
-  auto p = std::upper_bound( theIOVs.begin(), theIOVs.end(), target );
-  if( p != theIOVs.begin()){
-    p -= 1;
-  } else {
-    p = theIOVs.end();
-  }
-  if( p == theIOVs.end() ) throw G4HadronicException(__FILE__, __LINE__, "Data for temperature "+std::to_string(temperature)+" is not available");
-  auto data = theInteraction->find( *p );
+  int setId = theIOVs.find( temperature );
+  if( setId == -1 ) throw G4HadronicException(__FILE__, __LINE__, "Data for temperature "+std::to_string(temperature)+" is not available");
+  auto data = theInteraction->find( setId );
   if( data == theInteraction->end() ) throw G4HadronicException(__FILE__, __LINE__, "Data for temperature "+std::to_string(temperature)+" has not been loaded");
   return data->second;
 }
@@ -58,17 +51,6 @@ std::vector<G4ParticleHPChannel*>& G4ParticleHPNeutronInteractionData::getDefaul
 }
 
 #include <filesystem>
-size_t getTempDataSets( const std::string& topFolder, std::vector<std::string>& values ){
-  size_t sz = 0;
-  for (const auto &f : std::filesystem::directory_iterator(topFolder)){
-    std::string folderName = f.path().filename();
-    // it may be required to make a numeric-wise sort  
-    values.push_back(folderName);
-    sz++;
-  }
-  return sz; 
-}
-
 void G4ParticleHPNeutronInteractionData::BuildPhysicsTable( G4ParticleHPFinalState* templateFinalState, int ZThreshold )
 {
   if(theManagerProxy == nullptr) throw G4HadronicException(__FILE__, __LINE__, "Manager Proxy has not been initialized");
@@ -95,23 +77,20 @@ void G4ParticleHPNeutronInteractionData::BuildPhysicsTable( G4ParticleHPFinalSta
       if(std::getenv("G4NEUTRONHPTEMPDATA")){
 	// this is expected for the usage of temperature-specific data sets
 	dataDir = std::getenv("G4NEUTRONHPTEMPDATA");
-	dataDir.concat( theDataSetFolder.data() );
-	numberOfDataFolders = getTempDataSets(dataDir,dataSets);
+	numberOfDataFolders = crossSectionDataSet::getTempDataSets(dataDir,dataSets);
       } else {
 	dataDir = std::getenv("G4NEUTRONHPDATA");
-	dataDir.concat( theDataSetFolder.data() );
 	dataSets.push_back("");
       }
 
-      theIOVs.resize( numberOfDataFolders );
+      theIOVs.clear();
       for( size_t j=0; j<numberOfDataFolders; j++ ){
 	std::filesystem::path dataSetDir = dataDir;
 	std::string subFolder = dataSets[j];
 	// append the leaf of the temperature subfolder (if any )
 	if(!subFolder.empty()) dataSetDir = dataDir/subFolder;
-	// ... and set the corresponding key for the map
-	int key = subFolder.empty()? 0: std::stoi(subFolder);
-	theIOVs[j]=key;
+	dataSetDir = dataSetDir/theDataSetFolder.data();
+	int key = theIOVs.add(subFolder);
 	auto iInserted = theInteraction->insert(std::make_pair(key,std::vector<G4ParticleHPChannel*>()));
 	for ( G4int i = numEle ; i < (G4int)G4Element::GetNumberOfElements() ; i++ ) {
 	  iInserted.first->second.push_back( new G4ParticleHPChannel );
@@ -121,11 +100,13 @@ void G4ParticleHPNeutronInteractionData::BuildPhysicsTable( G4ParticleHPFinalSta
 	  }
 	}
       }
+      theIOVs.sort();
       theManagerProxy->RegisterInteractionFinalStates( theInteraction );
    } else {
      // retrieve the iovs...
      theIOVs.clear();
-     for( auto& iel : *theInteraction ) theIOVs.push_back( iel.first );
+     for( auto& iel : *theInteraction ) theIOVs.add( iel.first );
+     theIOVs.sort();
    }
    numEle = G4Element::GetNumberOfElements();
 }

@@ -85,10 +85,13 @@
 #include "G4ParticleHPTInelasticFS.hh"
 */
 #include "G4ParticleDefinition.hh"
+#include "G4CrossSectionDataFiles.hh"
 
 class G4ParticleHPInelastic : public G4HadronicInteraction
 {
-  public: 
+  public:
+
+  static constexpr const char* const MODEL_NAME = "Inelastic";
 
   G4ParticleHPInelastic(G4ParticleDefinition* projectile = G4Neutron::Neutron(), const char* name = "NeutronHPInelastic" );
 
@@ -104,12 +107,15 @@ class G4ParticleHPInelastic : public G4HadronicInteraction
       virtual void ModelDescription(std::ostream& outFile) const;
 
 protected:
+  std::vector<G4ParticleHPChannelList*>& selectDataSet( G4double temperature );
   
   //G4ParticleHPChannelList * theInelastic; // one List per element
-  std::vector<G4ParticleHPChannelList*>* theInelastic; // one List per element
+  std::map<int,std::vector<G4ParticleHPChannelList*> >* theInelastic; // one element List per temperature
   G4String dataDirVariable;
   G4String dirName;
   G4int numEle;
+  bool hasTempData = false;
+  CrossSectionDataIOVSet theIOVs;
 
   private:
  /* 

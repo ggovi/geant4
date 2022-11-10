@@ -226,7 +226,8 @@ void G4ParticleHPManager::DumpDataSource()
    G4cout << G4endl;
 }
 
-G4PhysicsTable* G4ParticleHPManager::GetInelasticCrossSections(const G4ParticleDefinition* particle )
+/**
+G4PhysicsTable* G4ParticleHPManager::GetInelasticCrossSections(const G4ParticleDefinition* particle)
 {
    if ( theInelasticCrossSections.end() !=  theInelasticCrossSections.find( particle ) )
       return theInelasticCrossSections.find( particle )->second; 
@@ -238,8 +239,9 @@ void G4ParticleHPManager::RegisterInelasticCrossSections( const G4ParticleDefini
 {
    theInelasticCrossSections.insert( std::pair<const G4ParticleDefinition* , G4PhysicsTable* >( particle , val ) ); 
 }
+**/
 
-std::vector<G4ParticleHPChannelList*>* G4ParticleHPManager::GetInelasticFinalStates(const G4ParticleDefinition* particle)
+std::map<int,std::vector<G4ParticleHPChannelList*> >* G4ParticleHPManager::GetInelasticFinalStates(const G4ParticleDefinition* particle)
 {
    if ( theInelasticFSs.end() != theInelasticFSs.find( particle ) )
       return theInelasticFSs.find( particle )->second;
@@ -247,9 +249,9 @@ std::vector<G4ParticleHPChannelList*>* G4ParticleHPManager::GetInelasticFinalSta
       return 0;
 }
 
-void G4ParticleHPManager::RegisterInelasticFinalStates( const G4ParticleDefinition* particle , std::vector<G4ParticleHPChannelList*>* val )
+void G4ParticleHPManager::RegisterInelasticFinalStates( const G4ParticleDefinition* particle , std::map<int,std::vector<G4ParticleHPChannelList*> >* val )
 {
-   theInelasticFSs.insert ( std::pair<const G4ParticleDefinition*,std::vector<G4ParticleHPChannelList*>*>( particle , val ) ); 
+  theInelasticFSs.insert ( std::pair<const G4ParticleDefinition*,std::map<int,std::vector<G4ParticleHPChannelList*> >*>( particle , val ) ); 
 }
 
 
